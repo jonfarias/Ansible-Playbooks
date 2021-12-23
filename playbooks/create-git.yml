@@ -1,0 +1,9 @@
+- name: Atualizar as chaves públicas nos devs da GBLIX
+  hosts: [gblixDevsII] 
+  roles:
+    - update-dev-keys
+
+- name: Criação de Git para Wordpress, Magento 1 & 2 e OsTicket
+  hosts: [gblixDevsII]
+  roles: 
+    - git-devs

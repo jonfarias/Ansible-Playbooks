@@ -1,0 +1,8 @@
+hosts
+hosts_chave
+ansible.cfg
+dev_hosts_key
+prod_hosts_key
+hosts
+/roles/update-dev-keys/files/keys
+/roles/update-prod-keys/files/keys

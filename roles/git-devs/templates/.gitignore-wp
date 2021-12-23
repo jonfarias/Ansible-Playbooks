@@ -1,0 +1,14 @@
+/nbproject/private/
+/wp-content/themes/sunnyday/nbproject/private/
+/wp-content/languages
+/wp-config.php
+/.htaccess
+.htaccess
+/wp-content/nbproject/private/
+/wp-content/uploads/
+robots.txt
+
+*.tar.gz
+*.tgz
+*.sql
+*.zip

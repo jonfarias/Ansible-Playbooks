@@ -1,0 +1,287 @@
+---
+# Git em ambiente de desenvolvimento Wordpress, Magento 1 & 2 e Osticket
+
+
+- name: Check if exists an old devbertholdo directory
+  stat:
+    path: /home/{{ ansible_ssh_user }}/devbertholdo
+  register: old_dir
+
+
+- name: Deleting the old devbertholdo directory
+  file:
+    state: absent
+    path: /home/{{ ansible_ssh_user }}/devbertholdo
+  when: old_dir.stat.exists
+
+
+- name: Create a new devbertholdo directory
+  file: 
+    path: /home/{{ ansible_ssh_user }}/devbertholdo
+    state: directory
+
+
+- name: Initiate {{ ansible_ssh_user }}.git in devberholdo
+  command: 
+    cmd: git init --bare {{ ansible_ssh_user }}.git
+  args:
+    chdir: ~/devbertholdo/
+
+
+- name: Copy post-receive to {{ ansible_ssh_user }}.git/hooks directory
+  template: src=post-receive dest=~/devbertholdo/{{ ansible_ssh_user }}.git/hooks/ 
+   
+
+- name: Change directory permissions
+  file:
+    path: /home/{{ ansible_ssh_user }}/devbertholdo/{{ ansible_ssh_user }}.git
+    state: directory
+    recurse: yes
+    mode: '0755'
+
+############################SSH Modules########################################
+#- name: Check if exist public_key 
+#  stat:
+#    path: /home/{{ ansible_ssh_user }}/.ssh/id_rsa.pub
+#  register: public_key
+
+
+#- name: Generate an OpenSSH keypair
+#  openssh_keypair:
+#    path: /home/{{ ansible_ssh_user }}/.ssh/id_rsa
+#    owner: "{{ ansible_ssh_user }}"
+#    group: "{{ ansible_ssh_user }}"
+#  when: not public_key.stat.exists
+
+
+#- name: Copy new public_key to authorized_keys
+#  command: chdir=/home/{{ ansible_ssh_user }}/.ssh cat id_rsa.pub >> authorized_keys 
+#  when: not public_key.stat.exists
+
+###############################################################################
+- name: Clean known_hosts
+  command: 
+    cmd: echo "" > ~/.ssh/known_hosts
+
+
+# Add entry to known_hosts for localhost server
+- name: Get host-key
+  local_action: command ssh-keyscan -t rsa -p {{ansible_ssh_port}} -H {{ansible_ssh_host}}
+  register: host_key
+
+
+- name: Add host-key to known_hosts
+  when: host_key is success
+  known_hosts:
+    name: "[{{ansible_ssh_host}}]:{{ansible_ssh_port}}"
+    state: present
+    hash_host: yes
+    key: "{{host_key.stdout}}"
+    path: /home/{{ ansible_ssh_user }}/.ssh/known_hosts
+
+
+- name: Clone repo in devbertholdo
+  environment:
+    GIT_SSH_COMMAND: ssh -i /home/{{ ansible_ssh_user }}/.ssh/id_rsa 
+  command: git clone ssh://{{ ansible_ssh_user }}@{{ ansible_ssh_host }}:{{ ansible_ssh_port }}/home/{{ ansible_ssh_user }}/devbertholdo/{{ ansible_ssh_user }}.git ~/devbertholdo/{{ ansible_ssh_user }}.local
+
+
+##############################BEGIN WORDPRESS##############################
+
+- name: Check if is a Wordpress site
+  stat:
+    path: /home/{{ ansible_ssh_user }}/public_html/wp-config.php
+  register: wordpress
+
+
+- name: Copy .gitignore to {{ ansible_ssh_user }}.local directory
+  template: src=.gitignore-wp dest=~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: wordpress.stat.exists
+
+
+- name: Renaming the .gitignore
+  command: 
+    cmd: mv .gitignore-wp .gitignore
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: wordpress.stat.exists
+
+##############################END WORDPRESS################################
+
+
+##############################BEGIN MAGENTO1##############################
+
+- name: Check if is a Magento 1.x site
+  stat:
+    path: /home/{{ ansible_ssh_user }}/public_html/app/etc/local.xml
+  register: magento_1
+
+
+- name: Copy .gitignore to {{ ansible_ssh_user }}.local directory
+  template: src=.gitignore-mg1 dest=~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: magento_1.stat.exists
+
+
+- name: Renaming the .gitignore
+  command:
+    cmd: mv .gitignore-mg1 .gitignore
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: magento_1.stat.exists
+
+##############################END MAGENTO1################################
+
+
+##############################BEGIN MAGENTO2##############################
+
+- name: Check if is a Magento 2.x site
+  stat:
+    path: /home/{{ ansible_ssh_user }}/public_html/app/etc/env.php
+  register: magento_2
+
+
+- name: Copy .gitignore to {{ ansible_ssh_user }}.local directory
+  template: src=.gitignore-mg2 dest=~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: magento_2.stat.exists
+
+
+- name: Renaming the .gitignore
+  command:
+    cmd: mv .gitignore-mg2 .gitignore
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: magento_2.stat.exists
+
+##############################END MAGENTO1################################
+
+
+#############################BEGIN OSTICKET###############################
+
+- name: Check if is a osTicket site
+  stat:
+    path: /home/{{ ansible_ssh_user }}/public_html/include/ost-config.php
+  register: osticket
+
+
+- name: Copy .gitignore to {{ ansible_ssh_user }}.local directory
+  template: src=.gitignore-os dest=~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: osticket.stat.exists
+
+
+- name: Renaming the .gitignore
+  command:
+    cmd: mv .gitignore-os .gitignore
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: osticket.stat.exists
+
+############################END OSTICKET##################################
+
+############################BEGIN XOOPS###################################
+
+- name: Check if is a XOOPS site
+  stat:
+    path: /home/{{ ansible_ssh_user }}/xoops_data
+  register: xoops
+
+
+- name: Copy .gitignore to {{ ansible_ssh_user }}.local directory
+  template: src=.gitignore-xoops dest=~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: xoops.stat.exists
+
+
+- name: Renaming the .gitignore
+  command:
+    cmd: mv .gitignore-xoops .gitignore
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+  when: xoops.stat.exists
+
+###############################END XOOPS#####################################
+
+- name: Git config user.email
+  shell: 
+    cmd: git config --global user.email "webmaster@bertholdo.com.br"
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+
+
+- name: Git config user.name
+  shell:
+    cmd: git config --global user.name "Bertholdo"
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+
+
+- name: Git add .gitignore
+  shell: 
+    cmd: git add .gitignore
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local/
+
+
+- name: Git commit .gitignore
+  shell: 
+    cmd: git commit -m "JB - Adicionando o gitignore"
+  args: 
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local
+
+
+- name: Git push .gitignore
+  shell:
+    cmd: git push
+  args: 
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local
+
+
+- name: Check if exists an old .git in ~/public_html/
+  stat:
+    path: ~/public_html/.git
+  register: git_old
+
+
+- name: Removing old .git in ~/public_html/
+  file:
+    state: absent
+    path: /home/{{ ansible_ssh_user }}/public_html/.git
+  when: git_old.stat.exists   
+
+
+- name: Move .git to ~/public_html/
+  command:
+    cmd: mv .git ~/public_html/
+  args:
+    chdir: ~/devbertholdo/{{ ansible_ssh_user }}.local
+
+
+- name: Git add ~/public_html/
+  shell:
+    cmd: git add .
+  args:
+    chdir: ~/public_html/
+
+
+- name: Git commit ~/public_html/
+  shell: 
+    cmd: git commit -m "JB - Primeiro Commit"
+  args:
+    chdir: ~/public_html/
+
+
+- name: Git push ~/public_html/
+  shell:
+    cmd: git push
+  args:
+    chdir: ~/public_html/
+
+
+- name: Making an archive of git clone and salving in devbertholdo
+  template: src=git-clone dest=~/devbertholdo/
+
+
+- name: Deleting the empty {{ ansible_ssh_user }}.local directory
+  file:
+    state: absent
+    path: /home/{{ ansible_ssh_user }}/devbertholdo/{{ ansible_ssh_user }}.local
+
+...

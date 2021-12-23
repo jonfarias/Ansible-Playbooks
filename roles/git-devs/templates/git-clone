@@ -1,0 +1,2 @@
+git clone ssh://{{ ansible_ssh_user }}@{{ ansible_ssh_host }}:{{ ansible_ssh_port }}/home/{{ ansible_ssh_user }}/devbertholdo/{{ ansible_ssh_user }}.git {{ ansible_ssh_user }}.local
+

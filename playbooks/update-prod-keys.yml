@@ -1,0 +1,5 @@
+- name: UPDATING PUB KEYS ON PROD I MACHINES
+  hosts: [gblixDevsI] 
+  roles:
+    - update-prod-keys
+
